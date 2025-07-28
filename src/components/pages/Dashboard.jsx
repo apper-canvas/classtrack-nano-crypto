@@ -14,34 +14,37 @@ import studentService from "@/services/api/studentService";
 import classService from "@/services/api/classService";
 import gradeService from "@/services/api/gradeService";
 import attendanceService from "@/services/api/attendanceService";
-
+import teacherService from "@/services/api/teacherService";
 const Dashboard = () => {
   const [data, setData] = useState({
-    students: [],
+students: [],
     classes: [],
     grades: [],
-    attendance: []
+    attendance: [],
+    teachers: []
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const loadDashboardData = async () => {
+const loadDashboardData = async () => {
     try {
       setLoading(true);
       setError("");
       
-      const [studentsData, classesData, gradesData, attendanceData] = await Promise.all([
+      const [studentsData, classesData, gradesData, attendanceData, teachersData] = await Promise.all([
         studentService.getAll(),
         classService.getAll(),
         gradeService.getAll(),
-        attendanceService.getAll()
+        attendanceService.getAll(),
+        teacherService.getAll()
       ]);
       
       setData({
         students: studentsData,
         classes: classesData,
         grades: gradesData,
-        attendance: attendanceData
+        attendance: attendanceData,
+        teachers: teachersData
       });
     } catch (err) {
       setError("Failed to load dashboard data. Please try again.");
@@ -60,9 +63,10 @@ const Dashboard = () => {
   // Calculate statistics
   const totalStudents = data.students.length;
   const activeStudents = data.students.filter(s => s.status === "active").length;
-  const totalClasses = data.classes.length;
+const totalClasses = data.classes.length;
+  const totalTeachers = data.teachers.length;
   
-  const averageGrade = data.grades.length > 0 
+  const averageGrade = data.grades.length > 0
     ? data.grades.reduce((sum, grade) => sum + (grade.score / grade.maxScore * 100), 0) / data.grades.length
     : 0;
 
@@ -127,10 +131,16 @@ const Dashboard = () => {
         <StatCard
           title="Average Grade"
           value={`${averageGrade.toFixed(1)}%`}
-          icon="Award"
+icon="Award"
           color={averageGrade >= 80 ? "success" : averageGrade >= 70 ? "warning" : "error"}
           trend={averageGrade >= 75 ? "up" : "down"}
           trendValue={`${averageGrade >= 75 ? "+" : "-"}${Math.abs(averageGrade - 75).toFixed(1)}% from target`}
+        />
+        <StatCard
+          title="Total Teachers"
+          value={totalTeachers}
+          icon="GraduationCap"
+          color="secondary"
         />
       </div>
 
