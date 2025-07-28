@@ -1,19 +1,20 @@
-import React, { useState, useEffect } from "react";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import Badge from "@/components/atoms/Badge";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import studentService from "@/services/api/studentService";
+import classService from "@/services/api/classService";
+import ApperIcon from "@/components/ApperIcon";
 import SearchBar from "@/components/molecules/SearchBar";
 import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { toast } from "react-toastify";
+import Students from "@/components/pages/Students";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Select from "@/components/atoms/Select";
+import Card from "@/components/atoms/Card";
 
 // Import services
-import classService from "@/services/api/classService";
-import studentService from "@/services/api/studentService";
 
 const Classes = () => {
   const [classes, setClasses] = useState([]);
@@ -28,14 +29,15 @@ const Classes = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Form state
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     name: "",
     subject: "",
     room: "",
-    schedule: ""
+    schedule: "",
+students: []
   });
+  const [studentsLoading, setStudentsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({});
-
   const loadData = async () => {
     try {
       setLoading(true);
@@ -69,12 +71,13 @@ const Classes = () => {
     loadData();
   }, []);
 
-  const resetForm = () => {
+const resetForm = () => {
     setFormData({
       name: "",
       subject: "",
       room: "",
-      schedule: ""
+      schedule: "",
+      students: []
     });
     setFormErrors({});
   };
@@ -85,12 +88,13 @@ const Classes = () => {
     setShowForm(true);
   };
 
-  const handleEditClass = (cls) => {
+const handleEditClass = (cls) => {
     setFormData({
       name: cls.name || "",
       subject: cls.subject || "",
       room: cls.room || "",
-      schedule: cls.schedule || ""
+      schedule: cls.schedule || "",
+      students: cls.students || []
     });
     setFormErrors({});
     setEditingClass(cls);
@@ -116,12 +120,21 @@ const Classes = () => {
     }
   };
 
-  const handleFormChange = (e) => {
+const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    if (name === "students") {
+      // Handle multi-select for students
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -131,8 +144,47 @@ const Classes = () => {
     }
   };
 
+  const handleStudentSelect = (studentId) => {
+    const student = students.find(s => s.Id === parseInt(studentId));
+    if (student && !formData.students.some(s => s.Id === student.Id)) {
+      setFormData(prev => ({
+        ...prev,
+        students: [...prev.students, student]
+      }));
+      
+      if (formErrors.students) {
+        setFormErrors(prev => ({
+          ...prev,
+          students: ""
+        }));
+      }
+    }
+  };
+
+  const handleStudentRemove = (studentId) => {
+    setFormData(prev => ({
+      ...prev,
+      students: prev.students.filter(s => s.Id !== studentId)
+    }));
+  };
+
+  const loadStudents = async () => {
+    try {
+      setStudentsLoading(true);
+      const studentData = await studentService.getAll();
+      setStudents(studentData);
+    } catch (error) {
+      toast.error("Failed to load students");
+    } finally {
+      setStudentsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
   const validateForm = () => {
-    const newErrors = {};
+const newErrors = {};
     
     if (!formData.name.trim()) {
       newErrors.name = "Class name is required";
@@ -150,11 +202,15 @@ const Classes = () => {
       newErrors.schedule = "Schedule is required";
     }
 
+    if (!formData.students || formData.students.length === 0) {
+      newErrors.students = "At least one student must be selected";
+    }
+
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmitClass = async (e) => {
+const handleSubmitClass = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -163,8 +219,12 @@ const Classes = () => {
       setFormLoading(true);
       
       const classData = {
-        ...formData,
-        teacherId: "teacher1" // In a real app, this would come from auth
+        name: formData.name,
+        subject: formData.subject,
+        room: formData.room,
+        schedule: formData.schedule,
+        teacherId: "teacher1", // In a real app, this would come from auth
+        students: formData.students.map(student => student.Id)
       };
       
       if (editingClass) {
@@ -255,8 +315,82 @@ const Classes = () => {
                 error={formErrors.schedule}
                 placeholder="e.g., MWF 9:00-10:00 AM"
               />
-            </div>
+</div>
 
+            {/* Students Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Students
+              </label>
+              <div className="space-y-3">
+                {/* Student Selection Dropdown */}
+                <div className="relative">
+                  <Select
+                    value=""
+                    onChange={(e) => handleStudentSelect(e.target.value)}
+                    className="w-full"
+                    disabled={studentsLoading}
+                  >
+                    <option value="" disabled>
+                      {studentsLoading ? "Loading students..." : "Select students to add"}
+                    </option>
+                    {students
+                      .filter(student => !formData.students.some(s => s.Id === student.Id))
+                      .map(student => (
+                        <option key={student.Id} value={student.Id}>
+                          {student.firstName_c} {student.lastName_c} ({student.email_c})
+                        </option>
+                      ))}
+                  </Select>
+                </div>
+
+                {/* Selected Students Display */}
+                {formData.students.length > 0 && (
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">
+                      Selected Students ({formData.students.length})
+                    </div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto">
+                      {formData.students.map(student => (
+                        <div
+                          key={student.Id}
+                          className="flex items-center justify-between bg-white p-2 rounded border"
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                              <span className="text-primary-600 font-medium text-sm">
+                                {student.firstName_c?.[0]}{student.lastName_c?.[0]}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="font-medium text-gray-900 text-sm">
+                                {student.firstName_c} {student.lastName_c}
+                              </div>
+                              <div className="text-gray-500 text-xs">
+                                {student.email_c}
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStudentRemove(student.Id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <ApperIcon name="X" size={16} />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {formErrors.students && (
+                  <p className="text-red-600 text-sm">{formErrors.students}</p>
+                )}
+              </div>
+            </div>
             <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
               <Button
                 type="button"
