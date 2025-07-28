@@ -6,6 +6,7 @@ import { ToastContainer } from "react-toastify";
 import Header from "@/components/organisms/Header";
 import Sidebar from "@/components/organisms/Sidebar";
 import Students from "@/components/pages/Students";
+import Teachers from "@/components/pages/Teachers";
 import Login from "@/components/pages/Login";
 import PromptPassword from "@/components/pages/PromptPassword";
 import ResetPassword from "@/components/pages/ResetPassword";
@@ -181,8 +182,9 @@ return (
           
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
+<Route path="/" element={<Dashboard />} />
               <Route path="/students" element={<Students />} />
+              <Route path="/teachers" element={<Teachers />} />
               <Route path="/classes" element={<Classes />} />
               <Route path="/grades" element={<Grades />} />
               <Route path="/attendance" element={<Attendance />} />
