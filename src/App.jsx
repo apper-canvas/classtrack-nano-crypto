@@ -1,23 +1,23 @@
+import "@/index.css";
 import React, { createContext, useEffect, useState } from "react";
 import { Route, Router, Routes, useNavigate } from "react-router-dom";
 import { Provider, useDispatch, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
-import store from "@/store";
-import { clearUser, setUser } from "@/store/userSlice";
-import Login from "@/components/pages/Login";
-import Signup from "@/components/pages/Signup";
-import Callback from "@/components/pages/Callback";
-import ErrorPage from "@/components/pages/ErrorPage";
-import ErrorPage from "@/components/pages/ErrorPage";
-import ResetPassword from "@/components/pages/ResetPassword";
-import PromptPassword from "@/components/pages/PromptPassword";
-import "@/index.css";
 import Header from "@/components/organisms/Header";
+import Sidebar from "@/components/organisms/Sidebar";
 import Students from "@/components/pages/Students";
+import Login from "@/components/pages/Login";
+import PromptPassword from "@/components/pages/PromptPassword";
+import ResetPassword from "@/components/pages/ResetPassword";
 import Grades from "@/components/pages/Grades";
+import Callback from "@/components/pages/Callback";
 import Classes from "@/components/pages/Classes";
 import Dashboard from "@/components/pages/Dashboard";
+import ErrorPage from "@/components/pages/ErrorPage";
+import Signup from "@/components/pages/Signup";
 import Attendance from "@/components/pages/Attendance";
+import { clearUser, setUser } from "@/store/userSlice";
+import store from "@/store/index";
 
 // Layout Components
 
@@ -206,7 +206,6 @@ return (
       </div>
     </AuthContext.Provider>
   );
-}
 }
 
 function App() {
