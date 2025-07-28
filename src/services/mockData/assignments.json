@@ -1,0 +1,66 @@
+[
+  {
+    "Id": 1,
+    "classId": 1,
+    "name": "Linear Equations Quiz",
+    "type": "quiz",
+    "dueDate": "2024-01-15T00:00:00Z",
+    "points": 50
+  },
+  {
+    "Id": 2,
+    "classId": 1,
+    "name": "Homework Set 1",
+    "type": "homework",
+    "dueDate": "2024-01-10T00:00:00Z",
+    "points": 25
+  },
+  {
+    "Id": 3,
+    "classId": 2,
+    "name": "Cell Structure Lab",
+    "type": "project",
+    "dueDate": "2024-01-20T00:00:00Z",
+    "points": 100
+  },
+  {
+    "Id": 4,
+    "classId": 2,
+    "name": "Midterm Exam",
+    "type": "exam",
+    "dueDate": "2024-01-25T00:00:00Z",
+    "points": 200
+  },
+  {
+    "Id": 5,
+    "classId": 3,
+    "name": "WWI Essay",
+    "type": "project",
+    "dueDate": "2024-01-18T00:00:00Z",
+    "points": 75
+  },
+  {
+    "Id": 6,
+    "classId": 1,
+    "name": "Quadratic Functions Test",
+    "type": "exam",
+    "dueDate": "2024-01-30T00:00:00Z",
+    "points": 150
+  },
+  {
+    "Id": 7,
+    "classId": 4,
+    "name": "Shakespeare Analysis",
+    "type": "project",
+    "dueDate": "2024-01-22T00:00:00Z",
+    "points": 80
+  },
+  {
+    "Id": 8,
+    "classId": 3,
+    "name": "Geography Quiz",
+    "type": "quiz",
+    "dueDate": "2024-01-12T00:00:00Z",
+    "points": 30
+  }
+]

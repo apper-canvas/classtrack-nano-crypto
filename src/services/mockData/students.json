@@ -1,0 +1,122 @@
+[
+  {
+    "Id": 1,
+    "firstName": "Emma",
+    "lastName": "Johnson",
+    "email": "emma.johnson@email.com",
+    "dateOfBirth": "2008-03-15T00:00:00Z",
+    "classId": 1,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 2,
+    "firstName": "Liam",
+    "lastName": "Smith",
+    "email": "liam.smith@email.com",
+    "dateOfBirth": "2008-07-22T00:00:00Z",
+    "classId": 1,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 3,
+    "firstName": "Olivia",
+    "lastName": "Brown",
+    "email": "olivia.brown@email.com",
+    "dateOfBirth": "2008-01-10T00:00:00Z",
+    "classId": 2,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 4,
+    "firstName": "Noah",
+    "lastName": "Davis",
+    "email": "noah.davis@email.com",
+    "dateOfBirth": "2008-09-05T00:00:00Z",
+    "classId": 2,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 5,
+    "firstName": "Ava",
+    "lastName": "Wilson",
+    "email": "ava.wilson@email.com",
+    "dateOfBirth": "2008-12-18T00:00:00Z",
+    "classId": 3,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 6,
+    "firstName": "William",
+    "lastName": "Moore",
+    "email": "william.moore@email.com",
+    "dateOfBirth": "2008-04-03T00:00:00Z",
+    "classId": 3,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 7,
+    "firstName": "Sophia",
+    "lastName": "Taylor",
+    "email": "sophia.taylor@email.com",
+    "dateOfBirth": "2008-06-14T00:00:00Z",
+    "classId": 1,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 8,
+    "firstName": "James",
+    "lastName": "Anderson",
+    "email": "james.anderson@email.com",
+    "dateOfBirth": "2008-11-28T00:00:00Z",
+    "classId": 2,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 9,
+    "firstName": "Isabella",
+    "lastName": "Jackson",
+    "email": "isabella.jackson@email.com",
+    "dateOfBirth": "2008-08-07T00:00:00Z",
+    "classId": 4,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 10,
+    "firstName": "Benjamin",
+    "lastName": "White",
+    "email": "benjamin.white@email.com",
+    "dateOfBirth": "2008-02-25T00:00:00Z",
+    "classId": 4,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 11,
+    "firstName": "Mia",
+    "lastName": "Harris",
+    "email": "mia.harris@email.com",
+    "dateOfBirth": "2008-05-12T00:00:00Z",
+    "classId": 1,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 12,
+    "firstName": "Lucas",
+    "lastName": "Martin",
+    "email": "lucas.martin@email.com",
+    "dateOfBirth": "2008-10-01T00:00:00Z",
+    "classId": 3,
+    "enrollmentDate": "2023-08-20T00:00:00Z",
+    "status": "inactive"
+  }
+]

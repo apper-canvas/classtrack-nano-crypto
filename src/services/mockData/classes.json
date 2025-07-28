@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "name": "Algebra I",
+    "subject": "Mathematics",
+    "room": "Room 201",
+    "schedule": "MWF 9:00-10:00 AM",
+    "teacherId": "teacher1"
+  },
+  {
+    "Id": 2,
+    "name": "Biology",
+    "subject": "Science",
+    "room": "Lab 105",
+    "schedule": "TTh 10:30-12:00 PM",
+    "teacherId": "teacher1"
+  },
+  {
+    "Id": 3,
+    "name": "World History",
+    "subject": "Social Studies",
+    "room": "Room 304",
+    "schedule": "MWF 1:00-2:00 PM",
+    "teacherId": "teacher1"
+  },
+  {
+    "Id": 4,
+    "name": "English Literature",
+    "subject": "English",
+    "room": "Room 208",
+    "schedule": "TTh 2:30-4:00 PM",
+    "teacherId": "teacher1"
+  },
+  {
+    "Id": 5,
+    "name": "Chemistry",
+    "subject": "Science",
+    "room": "Lab 102",
+    "schedule": "MWF 11:00-12:30 PM",
+    "teacherId": "teacher1"
+  }
+]
