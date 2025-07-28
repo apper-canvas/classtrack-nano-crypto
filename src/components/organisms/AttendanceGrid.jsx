@@ -1,330 +1,313 @@
-import React, { useState, useEffect } from "react";
-import Card from "@/components/atoms/Card";
-import Select from "@/components/atoms/Select";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Badge from "@/components/atoms/Badge";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { attendanceService } from "@/services/api/attendanceService";
 import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import Classes from "@/components/pages/Classes";
+import Attendance from "@/components/pages/Attendance";
+import Badge from "@/components/atoms/Badge";
+import Input from "@/components/atoms/Input";
+import Button from "@/components/atoms/Button";
+import Select from "@/components/atoms/Select";
+import Card from "@/components/atoms/Card";
 
-const AttendanceGrid = ({ students, attendance, classes, onSubmit, loading = false }) => {
-  const [selectedClass, setSelectedClass] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-  const [attendanceData, setAttendanceData] = useState({});
+const AttendanceGrid = ({ students = [], attendance = [], classes = [], onUpdate }) => {
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceRecords, setAttendanceRecords] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
 
-  const classStudents = students.filter(student => 
-    !selectedClass || student.classId === parseInt(selectedClass)
-  );
+  // Memoize filtered students to prevent unnecessary recalculations
+  const classStudents = useMemo(() => {
+    if (!students || !Array.isArray(students)) return [];
+    return students.filter(student => 
+      !selectedClass || student.classId === parseInt(selectedClass)
+    );
+  }, [students, selectedClass]);
 
+  // Memoize attendance data processing
+  const processedAttendance = useMemo(() => {
+    if (!attendance || !Array.isArray(attendance)) return {};
+    
+    const records = {};
+    attendance.forEach(record => {
+      if (record.date === selectedDate) {
+        records[record.studentId] = {
+          status: record.status,
+          notes: record.notes || ''
+        };
+      }
+    });
+    return records;
+  }, [attendance, selectedDate]);
+
+  // Initialize attendance records when processed data changes
   useEffect(() => {
-    const data = {};
-    classStudents.forEach(student => {
-      const existingRecord = attendance.find(record => 
-        record.studentId === student.Id && 
-        record.date.split("T")[0] === selectedDate
-      );
-      data[student.Id] = {
-        status: existingRecord ? existingRecord.status : "present",
-        notes: existingRecord ? existingRecord.notes : "",
-        recordId: existingRecord ? existingRecord.Id : null
-      };
-    });
-    setAttendanceData(data);
-  }, [classStudents, attendance, selectedDate]);
+    setAttendanceRecords(processedAttendance);
+  }, [processedAttendance]);
 
-  const handleStatusChange = (studentId, status) => {
-    setAttendanceData(prev => ({
+  // Memoized event handlers to prevent dependency changes
+  const handleStatusChange = useCallback((studentId, status) => {
+    setAttendanceRecords(prev => ({
       ...prev,
       [studentId]: {
         ...prev[studentId],
-        status: status
+        status,
+        notes: prev[studentId]?.notes || ''
       }
     }));
-  };
+  }, []);
 
-  const handleNotesChange = (studentId, notes) => {
-    setAttendanceData(prev => ({
+  const handleNotesChange = useCallback((studentId, notes) => {
+    setAttendanceRecords(prev => ({
       ...prev,
       [studentId]: {
         ...prev[studentId],
-        notes: notes
+        status: prev[studentId]?.status || 'present',
+        notes
       }
     }));
-  };
+  }, []);
 
-  const handleBulkUpdate = (status) => {
-    const updated = {};
+  const handleBulkUpdate = useCallback((status) => {
+    const bulkRecords = {};
     classStudents.forEach(student => {
-      updated[student.Id] = {
-        ...attendanceData[student.Id],
-        status: status
+      bulkRecords[student.id] = {
+        status,
+        notes: attendanceRecords[student.id]?.notes || ''
       };
     });
-    setAttendanceData(updated);
-  };
+    setAttendanceRecords(prev => ({ ...prev, ...bulkRecords }));
+  }, [classStudents, attendanceRecords]);
 
-  const handleSaveAttendance = () => {
-    const attendanceRecords = Object.entries(attendanceData).map(([studentId, data]) => ({
-      Id: data.recordId,
-      studentId: parseInt(studentId),
-      date: new Date(selectedDate).toISOString(),
-      status: data.status,
-      notes: data.notes
-    }));
+  const handleSaveAttendance = useCallback(async () => {
+    if (saving) return;
+    
+    try {
+      setSaving(true);
+      setError(null);
+      
+      const attendanceData = Object.entries(attendanceRecords).map(([studentId, record]) => ({
+        studentId: parseInt(studentId),
+        date: selectedDate,
+        status: record.status,
+        notes: record.notes,
+        classId: selectedClass ? parseInt(selectedClass) : null
+      }));
 
-    onSubmit(attendanceRecords);
-  };
+      // Save attendance records
+      for (const record of attendanceData) {
+        await attendanceService.create(record);
+      }
 
-  const getStatusBadgeVariant = (status) => {
-    switch (status) {
-      case "present": return "success";
-      case "absent": return "error";
-      case "tardy": return "warning";
-      case "excused": return "info";
-      default: return "default";
+      // Notify parent component of update
+      if (onUpdate && typeof onUpdate === 'function') {
+        onUpdate(attendanceData);
+      }
+
+    } catch (err) {
+      setError(err.message || 'Failed to save attendance');
+      console.error('Attendance save error:', err);
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [attendanceRecords, selectedDate, selectedClass, saving, onUpdate]);
 
-  const getStatusIcon = (status) => {
+  // Memoized helper functions
+  const getStatusBadgeVariant = useCallback((status) => {
     switch (status) {
-      case "present": return "CheckCircle";
-      case "absent": return "XCircle";
-      case "tardy": return "Clock";
-      case "excused": return "Shield";
-      default: return "Circle";
+      case 'present': return 'success';
+      case 'absent': return 'error';
+      case 'late': return 'warning';
+      case 'excused': return 'info';
+      default: return 'default';
     }
-  };
+  }, []);
 
-  const statusCounts = classStudents.reduce((counts, student) => {
-    const status = attendanceData[student.Id]?.status || "present";
-    counts[status] = (counts[status] || 0) + 1;
+  const getStatusIcon = useCallback((status) => {
+    switch (status) {
+      case 'present': return 'check';
+      case 'absent': return 'x';
+      case 'late': return 'clock';
+      case 'excused': return 'user-check';
+      default: return 'user';
+    }
+  }, []);
+
+  // Memoize status counts for performance
+  const statusCounts = useMemo(() => {
+    const counts = { present: 0, absent: 0, late: 0, excused: 0 };
+    Object.values(attendanceRecords).forEach(record => {
+      if (record && counts.hasOwnProperty(record.status)) {
+        counts[record.status]++;
+      }
+    });
     return counts;
-  }, {});
+  }, [attendanceRecords]);
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading attendance...</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <Card className="p-6">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 font-display mb-2">
-            Attendance Tracking
-          </h2>
-          <p className="text-gray-600">
-            Select a class and date to mark attendance
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <Select
-            label="Class"
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-          >
-            <option value="">All Classes</option>
-            {classes.map(cls => (
-              <option key={cls.Id} value={cls.Id}>
-                {cls.name} - {cls.subject}
-              </option>
-            ))}
-          </Select>
-
-          <Input
-            label="Date"
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-          />
-        </div>
-
-        {classStudents.length > 0 && (
-          <>
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">Bulk Actions:</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkUpdate("present")}
-                  leftIcon="CheckCircle"
-                >
-                  Mark All Present
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleBulkUpdate("absent")}
-                  leftIcon="XCircle"
-                >
-                  Mark All Absent
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4">
-                <div className="flex items-center">
-                  <ApperIcon name="CheckCircle" className="w-6 h-6 text-green-600 mr-2" />
-                  <div>
-                    <p className="text-sm text-green-600">Present</p>
-                    <p className="text-2xl font-bold text-green-700">{statusCounts.present || 0}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-red-50 to-red-100 rounded-lg p-4">
-                <div className="flex items-center">
-                  <ApperIcon name="XCircle" className="w-6 h-6 text-red-600 mr-2" />
-                  <div>
-                    <p className="text-sm text-red-600">Absent</p>
-                    <p className="text-2xl font-bold text-red-700">{statusCounts.absent || 0}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg p-4">
-                <div className="flex items-center">
-                  <ApperIcon name="Clock" className="w-6 h-6 text-yellow-600 mr-2" />
-                  <div>
-                    <p className="text-sm text-yellow-600">Tardy</p>
-                    <p className="text-2xl font-bold text-yellow-700">{statusCounts.tardy || 0}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4">
-                <div className="flex items-center">
-                  <ApperIcon name="Shield" className="w-6 h-6 text-blue-600 mr-2" />
-                  <div>
-                    <p className="text-sm text-blue-600">Excused</p>
-                    <p className="text-2xl font-bold text-blue-700">{statusCounts.excused || 0}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </Card>
-
-      {classStudents.length > 0 && (
-        <Card className="overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
-                Attendance for {new Date(selectedDate).toLocaleDateString()}
-              </h3>
-              <Button onClick={handleSaveAttendance} loading={loading}>
-                Save Attendance
-              </Button>
-            </div>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quick Actions
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Notes
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {classStudents.map((student) => {
-                  const data = attendanceData[student.Id] || { status: "present", notes: "" };
-
-                  return (
-                    <tr key={student.Id} className="hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 transition-all duration-200">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-primary-100 to-primary-200 rounded-full flex items-center justify-center mr-4">
-                            <span className="text-primary-600 font-medium">
-                              {student.firstName[0]}{student.lastName[0]}
-                            </span>
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {student.firstName} {student.lastName}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={getStatusBadgeVariant(data.status)}>
-                          <ApperIcon name={getStatusIcon(data.status)} className="w-3 h-3 mr-1" />
-                          {data.status}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex space-x-1">
-                          <button
-                            onClick={() => handleStatusChange(student.Id, "present")}
-                            className={`p-1 rounded-full transition-colors ${
-                              data.status === "present" 
-                                ? "bg-green-100 text-green-600" 
-                                : "text-gray-400 hover:text-green-600 hover:bg-green-50"
-                            }`}
-                            title="Present"
-                          >
-                            <ApperIcon name="CheckCircle" className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(student.Id, "absent")}
-                            className={`p-1 rounded-full transition-colors ${
-                              data.status === "absent" 
-                                ? "bg-red-100 text-red-600" 
-                                : "text-gray-400 hover:text-red-600 hover:bg-red-50"
-                            }`}
-                            title="Absent"
-                          >
-                            <ApperIcon name="XCircle" className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(student.Id, "tardy")}
-                            className={`p-1 rounded-full transition-colors ${
-                              data.status === "tardy" 
-                                ? "bg-yellow-100 text-yellow-600" 
-                                : "text-gray-400 hover:text-yellow-600 hover:bg-yellow-50"
-                            }`}
-                            title="Tardy"
-                          >
-                            <ApperIcon name="Clock" className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleStatusChange(student.Id, "excused")}
-                            className={`p-1 rounded-full transition-colors ${
-                              data.status === "excused" 
-                                ? "bg-blue-100 text-blue-600" 
-                                : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                            }`}
-                            title="Excused"
-                          >
-                            <ApperIcon name="Shield" className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <Input
-                          type="text"
-                          value={data.notes}
-                          onChange={(e) => handleNotesChange(student.Id, e.target.value)}
-                          placeholder="Add notes..."
-                          className="w-full text-sm"
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+      {error && (
+        <Card className="p-4 bg-red-50 border-red-200">
+          <div className="flex items-center space-x-2">
+            <ApperIcon name="alert-circle" className="w-5 h-5 text-red-600" />
+            <p className="text-red-800">{error}</p>
           </div>
         </Card>
       )}
+
+      {/* Controls */}
+      <Card className="p-6">
+        <div className="flex flex-wrap gap-4 items-end">
+          <div className="flex-1 min-w-48">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Class
+            </label>
+            <Select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              options={[
+                { value: '', label: 'All Classes' },
+                ...classes.map(cls => ({ value: cls.id.toString(), label: cls.name }))
+              ]}
+            />
+          </div>
+          
+          <div className="flex-1 min-w-48">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date
+            </label>
+            <Input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleBulkUpdate('present')}
+              disabled={saving}
+            >
+              Mark All Present
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleBulkUpdate('absent')}
+              disabled={saving}
+            >
+              Mark All Absent
+            </Button>
+          </div>
+        </div>
+
+        {/* Status Summary */}
+        <div className="flex gap-4 mt-4 pt-4 border-t">
+          <div className="flex items-center gap-2">
+            <Badge variant="success">Present: {statusCounts.present}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="error">Absent: {statusCounts.absent}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="warning">Late: {statusCounts.late}</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="info">Excused: {statusCounts.excused}</Badge>
+          </div>
+        </div>
+      </Card>
+
+      {/* Attendance Grid */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          {classStudents.length === 0 ? (
+            <div className="text-center py-8">
+              <ApperIcon name="users" className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-600">No students found for the selected class.</p>
+            </div>
+          ) : (
+            classStudents.map(student => {
+              const record = attendanceRecords[student.id] || { status: 'present', notes: '' };
+              
+              return (
+                <div key={student.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{student.name}</h4>
+                    <p className="text-sm text-gray-600">ID: {student.studentId}</p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <Select
+                      value={record.status}
+                      onChange={(e) => handleStatusChange(student.id, e.target.value)}
+                      options={[
+                        { value: 'present', label: 'Present' },
+                        { value: 'absent', label: 'Absent' },
+                        { value: 'late', label: 'Late' },
+                        { value: 'excused', label: 'Excused' }
+                      ]}
+                      className="w-32"
+                    />
+
+                    <Badge 
+                      variant={getStatusBadgeVariant(record.status)}
+                      className="flex items-center gap-1"
+                    >
+                      <ApperIcon name={getStatusIcon(record.status)} className="w-3 h-3" />
+                      {record.status}
+                    </Badge>
+
+                    <Input
+                      placeholder="Notes..."
+                      value={record.notes}
+                      onChange={(e) => handleNotesChange(student.id, e.target.value)}
+                      className="w-48"
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {classStudents.length > 0 && (
+          <div className="flex justify-end mt-6 pt-4 border-t">
+            <Button
+              onClick={handleSaveAttendance}
+              disabled={saving}
+              className="flex items-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <ApperIcon name="save" className="w-4 h-4" />
+                  Save Attendance
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
