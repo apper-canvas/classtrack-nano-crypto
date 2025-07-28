@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { attendanceService } from "@/services/api/attendanceService";
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import attendanceService from '@/services/api/attendanceService'
 import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
 import Classes from "@/components/pages/Classes";
