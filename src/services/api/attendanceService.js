@@ -1,57 +1,121 @@
-import attendanceData from "@/services/mockData/attendance.json";
+import { toast } from "react-toastify";
 
 class AttendanceService {
   constructor() {
-    this.attendance = [...attendanceData];
+    // Initialize ApperClient with Project ID and Public Key
+    const { ApperClient } = window.ApperSDK;
+    this.apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
   }
 
   async getAll() {
-    await this.delay(300);
-    return [...this.attendance];
-  }
-
-  async getById(id) {
-    await this.delay(200);
-    const record = this.attendance.find(a => a.Id === id);
-    if (!record) {
-      throw new Error("Attendance record not found");
+    try {
+      const params = {
+        "fields": [
+          {
+            "field": {
+              "Name": "Name"
+            }
+          },
+          {
+            "field": {
+              "Name": "studentId_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "date_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "status_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "notes_c"
+            }
+          }
+        ]
+      };
+      
+      const response = await this.apperClient.fetchRecords('attendance_c', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+      
+      if (!response.data || response.data.length === 0) {
+        return [];
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching attendance records:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to load attendance records");
+      }
+      return [];
     }
-    return { ...record };
   }
 
-  async create(attendanceData) {
-    await this.delay(400);
-    const newId = Math.max(...this.attendance.map(a => a.Id)) + 1;
-    const newRecord = {
-      Id: newId,
-      ...attendanceData
-    };
-    this.attendance.push(newRecord);
-    return { ...newRecord };
-  }
-
-  async update(id, attendanceData) {
-    await this.delay(400);
-    const index = this.attendance.findIndex(a => a.Id === id);
-    if (index === -1) {
-      throw new Error("Attendance record not found");
+  async getById(recordId) {
+    try {
+      const tableFields = [
+        {
+          "field": {
+            "Name": "Name"
+          }
+        },
+        {
+          "field": {
+            "Name": "studentId_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "date_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "status_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "notes_c"
+          }
+        }
+      ];
+      
+      const params = {
+        fields: tableFields
+      };
+      
+      const response = await this.apperClient.getRecordById('attendance_c', recordId, params);
+      
+      if (!response || !response.data) {
+        return null;
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching attendance record with ID ${recordId}:`, error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    this.attendance[index] = { ...this.attendance[index], ...attendanceData };
-    return { ...this.attendance[index] };
-  }
-
-  async delete(id) {
-    await this.delay(300);
-    const index = this.attendance.findIndex(a => a.Id === id);
-    if (index === -1) {
-      throw new Error("Attendance record not found");
-    }
-    this.attendance.splice(index, 1);
-    return true;
-  }
-
-  delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 

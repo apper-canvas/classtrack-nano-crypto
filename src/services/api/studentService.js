@@ -1,57 +1,151 @@
-import studentsData from "@/services/mockData/students.json";
+import { toast } from "react-toastify";
 
 class StudentService {
   constructor() {
-    this.students = [...studentsData];
+    // Initialize ApperClient with Project ID and Public Key
+    const { ApperClient } = window.ApperSDK;
+    this.apperClient = new ApperClient({
+      apperProjectId: import.meta.env.VITE_APPER_PROJECT_ID,
+      apperPublicKey: import.meta.env.VITE_APPER_PUBLIC_KEY
+    });
   }
 
   async getAll() {
-    await this.delay(300);
-    return [...this.students];
-  }
-
-  async getById(id) {
-    await this.delay(200);
-    const student = this.students.find(s => s.Id === id);
-    if (!student) {
-      throw new Error("Student not found");
+    try {
+      const params = {
+        "fields": [
+          {
+            "field": {
+              "Name": "Name"
+            }
+          },
+          {
+            "field": {
+              "Name": "firstName_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "lastName_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "email_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "dateOfBirth_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "enrollmentDate_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "status_c"
+            }
+          },
+          {
+            "field": {
+              "Name": "classId_c"
+            }
+          }
+        ]
+      };
+      
+      const response = await this.apperClient.fetchRecords('student_c', params);
+      
+      if (!response.success) {
+        console.error(response.message);
+        toast.error(response.message);
+        return [];
+      }
+      
+      if (!response.data || response.data.length === 0) {
+        return [];
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error("Error fetching students:", error?.response?.data?.message);
+        toast.error(error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+        toast.error("Failed to load students");
+      }
+      return [];
     }
-    return { ...student };
   }
 
-  async create(studentData) {
-    await this.delay(400);
-    const newId = Math.max(...this.students.map(s => s.Id)) + 1;
-    const newStudent = {
-      Id: newId,
-      ...studentData
-    };
-    this.students.push(newStudent);
-    return { ...newStudent };
-  }
-
-  async update(id, studentData) {
-    await this.delay(400);
-    const index = this.students.findIndex(s => s.Id === id);
-    if (index === -1) {
-      throw new Error("Student not found");
+  async getById(recordId) {
+    try {
+      const tableFields = [
+        {
+          "field": {
+            "Name": "Name"
+          }
+        },
+        {
+          "field": {
+            "Name": "firstName_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "lastName_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "email_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "dateOfBirth_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "enrollmentDate_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "status_c"
+          }
+        },
+        {
+          "field": {
+            "Name": "classId_c"
+          }
+        }
+      ];
+      
+      const params = {
+        fields: tableFields
+      };
+      
+      const response = await this.apperClient.getRecordById('student_c', recordId, params);
+      
+      if (!response || !response.data) {
+        return null;
+      }
+      
+      return response.data;
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        console.error(`Error fetching student record with ID ${recordId}:`, error?.response?.data?.message);
+      } else {
+        console.error(error.message);
+      }
+      return null;
     }
-    this.students[index] = { ...this.students[index], ...studentData };
-    return { ...this.students[index] };
-  }
-
-  async delete(id) {
-    await this.delay(300);
-    const index = this.students.findIndex(s => s.Id === id);
-    if (index === -1) {
-      throw new Error("Student not found");
-    }
-    this.students.splice(index, 1);
-    return true;
-  }
-
-  delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
 
