@@ -47,15 +47,14 @@ const [formData, setFormData] = useState({
       ]);
       
       // Enhance classes with student count
-      const enhancedClasses = classesData.map(cls => {
-        const enrolledStudents = studentsData.filter(s => s.classId === cls.Id);
+const enhancedClasses = classesData.map(cls => {
+        const enrolledStudents = studentsData.filter(s => s.classId_c === cls.Id);
         return {
           ...cls,
           studentCount: enrolledStudents.length,
           students: enrolledStudents
         };
       });
-      
       setClasses(enhancedClasses);
       setStudents(studentsData);
     } catch (err) {
@@ -87,10 +86,10 @@ const resetForm = () => {
 
 const handleEditClass = (cls) => {
     setFormData({
-      name: cls.name || "",
-      subject: cls.subject || "",
-      room: cls.room || "",
-      schedule: cls.schedule || "",
+      name: cls.Name || "",
+      subject: cls.subject_c || "",
+      room: cls.room_c || "",
+      schedule: cls.schedule_c || "",
 });
     setFormErrors({});
     setEditingClass(cls);
@@ -199,11 +198,11 @@ const classData = {
   };
 
   // Filter classes
-  const filteredClasses = classes.filter(cls => {
+const filteredClasses = classes.filter(cls => {
     if (searchTerm === "") return true;
-    return cls.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           cls.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           cls.room.toLowerCase().includes(searchTerm.toLowerCase());
+    return cls.Name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           cls.subject_c?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           cls.room_c?.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   if (loading) return <Loading />;
@@ -322,9 +321,9 @@ const classData = {
                   <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-200 rounded-lg flex items-center justify-center mr-4">
                     <ApperIcon name="BookOpen" className="w-6 h-6 text-primary-600" />
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{cls.name}</h3>
-                    <p className="text-sm text-gray-600">{cls.subject}</p>
+<div>
+                    <h3 className="text-lg font-semibold text-gray-900">{cls.Name}</h3>
+                    <p className="text-sm text-gray-600">{cls.subject_c}</p>
                   </div>
                 </div>
                 
@@ -348,14 +347,14 @@ const classData = {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-600">
+<div className="flex items-center text-sm text-gray-600">
                   <ApperIcon name="MapPin" className="w-4 h-4 mr-2" />
-                  {cls.room}
+                  {cls.room_c}
                 </div>
                 
                 <div className="flex items-center text-sm text-gray-600">
                   <ApperIcon name="Clock" className="w-4 h-4 mr-2" />
-                  {cls.schedule}
+                  {cls.schedule_c}
                 </div>
                 
                 <div className="flex items-center justify-between">

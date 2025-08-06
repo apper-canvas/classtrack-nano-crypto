@@ -107,7 +107,7 @@ class ClassService {
         return null;
       }
       
-      return response.data;
+return response.data;
     } catch (error) {
       if (error?.response?.data?.message) {
         console.error(`Error fetching class record with ID ${recordId}:`, error?.response?.data?.message);
@@ -115,7 +115,6 @@ class ClassService {
         console.error(error.message);
       }
       return null;
-return null;
     }
   }
 
