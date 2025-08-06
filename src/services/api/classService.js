@@ -221,5 +221,3 @@ return null;
 
 const classService = new ClassService();
 export default classService;
-
-export default new ClassService();
